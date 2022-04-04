@@ -1,12 +1,13 @@
 const userModel = require("../Model/userModel")
 const shortId = require("shortid")
 const validUrl = require("valid-url")
-const baseUrl = "http://localhost:3000/"
+
 
 // ### POST /url/shorten:
 
 const urlMake = async function(req,res){
 try{
+    const baseUrl = "http://localhost:3000/"
     const data = req.body
     const {longUrl,shortUrl,urlCode} = data
     if(Object.keys(data)==0)return res.status(400).send({status:false,msg:"please put details in the body"})
@@ -15,16 +16,13 @@ try{
     // VALIDATING LONG-URL:
     if(!data.longUrl) return res.status(400).send({status:false,msg:"longUrl is not present"})
     if(data.longUrl.trim().length == 0) return res.status(400).send({status:false,msg:"enter the longUrl in proper format"})
-    if (!validUrl.isUri(longUrl.trim())){return res.status(400).send({status:false,msg:"longUrl is not valid"})}
+    if(!(/(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/).test(longUrl))return res.status(400).send({status:false,msg:"longUrl is invalid"})
+    let duplongUrl = await userModel.findOne({longUrl:longUrl})
+    if(duplongUrl)return res.status(400).send({status:false,msg:"shortUrl is already generated for this longUrl"})
     // VALIDATING URL-CODE:
-    if(!data.urlCode) return res.status(400).send({status:false,msg:"UrlCode is not present"})
-    if(data.urlCode.trim().length == 0) return res.status(400).send({status:false,msg:"enter the urlcode in proper format"})
-    let dupurlCode = await userModel.findOne({urlCode:urlCode.trim()})
-    if(dupurlCode) return res.status(400).send({status: false, msg: `${data.urlCode} is already registered`})
+    data.urlCode = shortId.generate().toLowerCase()
     // VALIDATING SHORT-URL:
-    if(!data.shortUrl) return res.status(400).send({status:false,msg:"shortUrl is not present"})
-    if(data.shortUrl.trim().length == 0) return res.status(400).send({status:false,msg:"enter the shortUrl in proper format"})
-    data.shortUrl = baseUrl + `${data.urlCode}`.toLowerCase()
+    data.shortUrl = baseUrl + `${data.urlCode}`
     console.log(data.shortUrl)
     const SavedUrl = await userModel.create(data)
     return res.status(201).send({status: true,msg:"url-shortend", data: {"longUrl": SavedUrl.longUrl,"shortUrl": SavedUrl.shortUrl,"urlCode": SavedUrl.urlCode}})
@@ -38,18 +36,15 @@ const getUrlcode = async function(req,res){
     try{
        const urlCode = req.params.urlCode
        if(!urlCode)return res.status(400).send({status:false,msg:"params value is not present"})
+       if(urlCode.length!=9)return res.status(400).send({status:false,msg:"not a valid urlCode"})
        const url = await userModel.findOne({urlCode})
        if(!url){return res.status(400).send({status:false,msg:"urlCode is not present"})}
-       res.status(200).send({status:true,msg:"longUrl",data:url.longUrl})
+       res.status(200).redirect(url.longUrl)
     }catch(error) {
     return res.status(500).send({status:false, msg: error.message})
     }
 }
 
 
-
-
-
-module.exports.urlMake = urlMake
-module.exports.getUrlcode = getUrlcode
-
+module.exports.urlMake= urlMake
+module.exports.getUrlcode=getUrlcode

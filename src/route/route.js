@@ -3,7 +3,7 @@ const router = express.Router()
 const userController = require("../controller/userController")
 
 
-router.post("/url",userController.urlMake)
+router.post("/url/shorten",userController.urlMake)
 router.get("/:urlCode",userController.getUrlcode)
 
 
