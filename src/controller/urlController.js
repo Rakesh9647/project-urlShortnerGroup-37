@@ -53,9 +53,9 @@ try{
     // let duplongUrl = await urlModel.findOne({longUrl:longUrl})
     // if(duplongUrl)return res.status(400).send({status:false,msg:"shortUrl is already generated for this longUrl"})
     // VALIDATING URL-CODE:
-    const uniqueurl = await urlModel.findOne({ longUrl: data.longUrl }).select({createdAt:0,updatedAt:0,__v:0})
-    if (uniqueurl) {
-        return res.status(200).send({ status:true,data:uniqueurl })
+    const duplicateUrl = await urlModel.findOne({ longUrl: data.longUrl }).select({createdAt:0,updatedAt:0,__v:0})
+    if (duplicateUrl) {
+        return res.status(200).send({ status:true,data:duplicateUrl })
     }
 
 
